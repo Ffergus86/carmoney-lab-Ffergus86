@@ -31,6 +31,32 @@ Docker'а на ноутбуке нет? Тогда локально работа
 | `make seed` | перезалить учебные данные |
 | `make help` | список всех команд |
 
+## Как проверить, что сервис жив
+
+После `make up` подождите 5–10 секунд (MySQL в контейнере поднимается не мгновенно) и
+проверьте тремя способами — от «контейнеры в порядке» до «HTTP отвечает»:
+
+```bash
+make ps        # статус контейнеров: у backend и db в колонке State должно быть Up / healthy
+make logs      # поток логов backend — Ctrl+C, чтобы выйти
+curl -i http://localhost:8080/health   # ждём HTTP/1.1 200 OK
+```
+
+Если порт 8080 на стенде занят, поднимите на своём: `APP_PORT=8085 make up`, тогда health
+будет на `http://localhost:8085/health`. Если `/health` не отвечает — `make logs` покажет,
+на чём сервис остановился (чаще всего это ещё не поднялась БД).
+
+Быстрый smoke-тест, что считается и заявка:
+
+```bash
+curl -X POST http://localhost:8080/api/ltv \
+  -H 'Content-Type: application/json' \
+  -d '{"vin":"XTA21099998765432","year":2019,"mileage":84000,
+       "market_value":900000,"requested_amount":450000,"term_months":24}'
+```
+
+В ответе ждём поле `decision` со значением `approve` / `review` / `reject`.
+
 ## API
 
 | Метод | Путь | Зачем |
