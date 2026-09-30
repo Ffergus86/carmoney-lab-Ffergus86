@@ -31,6 +31,7 @@ final class AssessmentService
 
         $ltv = $this->ltvCalculator->calculate($input['requested_amount'], $input['market_value']);
         $decision = $this->decisionEngine->decide($ltv);
+        $decision = $this->applyMileageReview($decision, $input['mileage']);
 
         return [
             'vehicle_age' => $this->vehicleAge->inYears($input['year']),
@@ -39,5 +40,21 @@ final class AssessmentService
             'approved_limit' => $decision === DecisionEngine::APPROVE ? $input['requested_amount'] : 0,
             'input' => $input,
         ];
+    }
+
+    private function applyMileageReview(string $decision, int $mileage): string
+    {
+        if ($decision !== DecisionEngine::APPROVE) {
+            return $decision;
+        }
+
+        $rules = require dirname(__DIR__, 2) . '/config/rules.php';
+        $reviewMileage = $rules['vehicle']['review_mileage_km'];
+
+        if ($mileage > $reviewMileage) {
+            return DecisionEngine::REVIEW;
+        }
+
+        return $decision;
     }
 }
