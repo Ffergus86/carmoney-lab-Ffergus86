@@ -36,13 +36,20 @@
 - Причина `review` в ответ и в таблицу `decisions` не попадает: колонки reason нет.
 - Не входит: форма, схема БД, `DecisionEngine`, `LtvCalculator`, `max_mileage_km`, лимит по возрасту (`ltv_by_age`).
 
-## Вопросы без заказчика
+## Сверка со spec
 
-- 400000 включительно остаётся по LTV или уже `review`?
-- Пробег выше порога перебивает `reject` в `review` или отказ по LTV важнее?
-- Пустой и нечисловой пробег — ошибка валидации, как сейчас, или тоже `review`?
-- Нужно ли писать причину `review` в JSON и в `decisions`?
-- Как назвать ключ порога в `rules.php`?
+`docs/spec/spec_MILEAGE.md`. Новых файлов сверх этого плана нет: форма, валидатор, `DecisionEngine`, `LtvCalculator` и `max_mileage_km` не меняются.
+
+Закрыто спекой, в план больше не вопрос:
+
+- 400000 включительно остаётся тем, что дал LTV. Review по пробегу — только если больше. REQ-MILEAGE-01, AC-MILEAGE-01 и AC-MILEAGE-02.
+- Пробег 400001 при LTV-approve даёт review и лимит 0, LTV не пересчитывается. REQ-MILEAGE-02, AC-MILEAGE-03.
+- Если по LTV уже review, review остаётся. AC-MILEAGE-04.
+- Пустой пробег — ошибка ввода `mileage`, не review и не approve. REQ-MILEAGE-03, AC-MILEAGE-05.
+
+Перенесено, в коде не решаем: если по LTV уже reject, а пробег больше 400000, reject не меняем, пока риск-менеджмент не ответит.
+
+Порог в конфиге называется `vehicle.review_mileage_km`. Причину review в ответ не добавляем.
 
 ## Сравнение с агентом plan
 
