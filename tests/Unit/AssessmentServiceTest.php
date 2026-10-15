@@ -8,6 +8,7 @@ use CarMoneyLab\Domain\ApplicationValidator;
 use CarMoneyLab\Domain\AssessmentService;
 use CarMoneyLab\Domain\DecisionEngine;
 use CarMoneyLab\Domain\LtvCalculator;
+use CarMoneyLab\Domain\ValidationException;
 use CarMoneyLab\Domain\VehicleAge;
 use CarMoneyLab\Domain\VinValidator;
 use PHPUnit\Framework\TestCase;
@@ -68,5 +69,64 @@ final class AssessmentServiceTest extends TestCase
         self::assertSame(95.0, $result['ltv']);
         self::assertSame(DecisionEngine::REJECT, $result['decision']);
         self::assertSame(0, $result['approved_limit']);
+    }
+
+    public function testMileage399999KeepsLtvApprove(): void
+    {
+        $payload = $this->payload(450000, 900000);
+        $payload['mileage'] = 399999;
+
+        $result = $this->service->assess($payload);
+
+        self::assertSame(DecisionEngine::APPROVE, $result['decision']);
+        self::assertSame(450000, $result['approved_limit']);
+    }
+
+    public function testMileage400000KeepsLtvApprove(): void
+    {
+        $payload = $this->payload(450000, 900000);
+        $payload['mileage'] = 400000;
+
+        $result = $this->service->assess($payload);
+
+        self::assertSame(DecisionEngine::APPROVE, $result['decision']);
+        self::assertSame(450000, $result['approved_limit']);
+    }
+
+    public function testMileage400001DowngradesApproveToReview(): void
+    {
+        $payload = $this->payload(450000, 900000);
+        $payload['mileage'] = 400001;
+
+        $result = $this->service->assess($payload);
+
+        self::assertSame(50.0, $result['ltv']);
+        self::assertSame(DecisionEngine::REVIEW, $result['decision']);
+        self::assertSame(0, $result['approved_limit']);
+    }
+
+    public function testMileage400001KeepsExistingLtvReview(): void
+    {
+        $payload = $this->payload(675000, 900000);
+        $payload['mileage'] = 400001;
+
+        $result = $this->service->assess($payload);
+
+        self::assertSame(75.0, $result['ltv']);
+        self::assertSame(DecisionEngine::REVIEW, $result['decision']);
+        self::assertSame(0, $result['approved_limit']);
+    }
+
+    public function testEmptyMileageDoesNotBecomeReview(): void
+    {
+        $payload = $this->payload(450000, 900000);
+        unset($payload['mileage']);
+
+        try {
+            $this->service->assess($payload);
+            self::fail('Ожидали ValidationException');
+        } catch (ValidationException $exception) {
+            self::assertArrayHasKey('mileage', $exception->errors());
+        }
     }
 }
