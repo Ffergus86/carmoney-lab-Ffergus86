@@ -1,21 +1,5 @@
 {
   "$schema": "https://app.kilo.ai/config.json",
-  "instructions": [
-    "/Users/neuradev/.config/kilo/rules/ast-index.md",
-    "/Users/neuradev/.config/kilo/rules/caveman.md"
-  ],
-  "mcp": {
-    "caveman": {
-      "type": "local",
-      "command": ["/Users/neuradev/.caveman/bin/caveman-mcp"],
-      "enabled": true
-    },
-    "playwright": {
-      "type": "local",
-      "command": ["npx", "@playwright/mcp@latest"],
-      "enabled": true
-    }
-  },
   "model": "stg-litellm/training-2026-09-glm-5.3",
   "provider": {
     "stg-litellm": {
@@ -32,9 +16,19 @@
     }
   },
   "permission": {
-    "bash": {
-      "mkdir *": "allow",
-      "printf *": "allow"
+    "read": { "*": "allow", "*.env*": "deny" },
+    "edit": { "*": "allow", "*.env*": "deny", "kilo.jsonc": "deny" },
+    "bash": { "*": "ask", "ast-index *": "allow", "git *": "allow", "git push*": "ask", "make *": "allow", "mkdir *": "allow", "printf *": "allow", "*.env*": "deny", "*reset_db*": "deny", "rm -rf*": "deny", "git push --force*": "deny" }
+  },
+  "instructions": [
+    "~/.config/kilo/rules/ast-index.md",
+    "~/.config/kilo/rules/caveman-output.md"
+  ],
+  "mcp": {
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@latest"],
+      "enabled": true
     }
   }
 }
